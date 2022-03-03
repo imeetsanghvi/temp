@@ -251,7 +251,7 @@ var purple_air = {
 
             console.log('fetchin data from purple air')
             console.log('entry created')
-            const BASE_URL = "https://api.purple_air.com/v1/sensors?api_key=CA299E4B-82DF-11EC-B9BF-42010A800003&"
+            const BASE_URL = "https://api.purpleair.com/v1/sensors?api_key=CA299E4B-82DF-11EC-B9BF-42010A800003&"
             const REQUIRED_FIELDS = "name,date_created,humidity,temperature,pressure,pm2.5,pm10.0,latitude,longitude"
             const bounds = this.state.bounding_box
             const lat1 = bounds[0]
