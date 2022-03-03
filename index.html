@@ -68,9 +68,9 @@
     </div>  
 
     <div class="d-flex justify-content-center mt-2">
-        <button id="fetchMyLocation" onclick="purpleAir.fetchLocation()" class="btn btn-info mr-2 small">Fetch my location</button>
-        <button id="clearLocation" onclick="purpleAir.clearLocation()" class="btn btn-info mr-2" >Clear Location</button>
-        <button id="searchLocation" onclick="purpleAir.searchLocation()" class="btn btn-info">Search Location</button>
+        <button id="fetchMyLocation" onclick="purple_air.fetchLocation()" class="btn btn-info mr-2 small">Fetch my location</button>
+        <button id="clearLocation" onclick="purple_air.clearLocation()" class="btn btn-info mr-2" >Clear Location</button>
+        <button id="searchLocation" onclick="purple_air.searchLocation()" class="btn btn-info">Search Location</button>
     </div>
     
     
@@ -83,7 +83,7 @@
         class="form-control bg-info mr-1" 
         min="10" max="100" value="10" id="radiusRange"
         oninput="this.nextElementSibling.value = this.value"
-        onchange="purpleAIr.changeRadius()"
+        onchange="purple_air.changeRadius()"
         >
         <output id="radiusText" class="input-group-text">10</output>
     </div>
@@ -97,7 +97,7 @@
 
 <p id="msg" class="alert alert-danger" style="display: none;"></p>
 <!-- </form> -->
-<button id="getPurpleAirData" onclick="purpleAir.getPurpleAirData()"  class="btn btn-outline-primary mt-2 btn-sm btn-block">Get Purple Air Data</button>
+<button id="getPurpleAirData" onclick="purple_air.getPurpleAirData()"  class="btn btn-outline-primary mt-2 btn-sm btn-block">Get Purple Air Data</button>
 
 </div>
 
