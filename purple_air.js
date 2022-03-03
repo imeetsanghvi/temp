@@ -239,7 +239,7 @@ var purple_air = {
         
     },
 
-    getpurple_airData: async function(){
+    getPurpleAirData: async function(){
         let search = document.getElementById("city_input").value
 
         if (search === ""){
