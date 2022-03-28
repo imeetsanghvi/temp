@@ -1,5 +1,6 @@
 var milesToKms = 1.60934
 const myMAP = "my_location_map"
+const default_radius_value = 10;
 
 var requestOptions = {
     method: 'GET',
@@ -9,10 +10,11 @@ function startCodapConnection() {
     var config = {
         title: "Purple Air Plugin",
         version: "001",
-        dimensions: {width: 460, height: 500}
+        dimensions: {width: 380, height: 600},
+        preventBringToFront: false,
     };
 
-    console.log("Starting codap connection");
+    console.info("Starting codap connection");
 
     codapInterface.init(config).then(
         function () { //  at this point, purple_air.state is populated!
@@ -32,131 +34,184 @@ function startCodapConnection() {
 var purple_air = {
 
     initialize: function () {
-        pluginHelper.initDataSet(purple_air.dataSetDescription);
-        // purple_air.fetchLocation()
-        // purple_air.getDate()
-    },
-
-    updateMap: function (lat, long){
-        const update_request = {
-            "action": "update",
-            "resource": `component[${myMAP}]`,
-            "values": {
-                "legendAttributeName": "Legend",
-                "center": [lat, long],
-                "zoom": 8
-                }
-            }
-            console.info(update_request)
-        codapInterface.sendRequest(update_request).
-        then(function (result) {console.log(result);});
-    },
-    // getTable: function(){
-    //     console.log('called')
-    //     codapInterface.sendRequest({
-    //         "action": "get",
-    //         "resource": "dataContext[dataset]"
-    //       }).then(x=>console.log(`get data context = ${JSON.stringify(x)}`))
-    // },
-    getDate: function(){
-        // console.log('getting date')
-        var today = new Date()
-
-        var dd = String(today.getDate()-1).padStart(2, '0');
-        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
-        var yyyy = today.getFullYear();
-
-        today = yyyy + '-' + mm + '-' + dd;
-        // console.log(today);
-
-        // var yesterdayString = `${today.getFullYear()}-${(today.getMonth()+1).padStart(2,'0')}-${today.getDay().padStart(2,'0')}`
-        document.getElementById("startDate").max = today
-        document.getElementById("startDate").value = today
-        this.state.startDate = purple_air.convertDate(today)
-        // this.state.fullStartDate = new Date(this.state.startDate)
-        // console.log("start date = " + document.getElementById('startDate').value)
-    },
-    convertDate: function(date){
-        // date == "2022-02-28" string input as yyyy-mm-dd 
-        // convert to "mm/dd/yyyy"
-        var x = date.split("-")
-        var stringDate = `${x[1]}/${x[2]}/${x[0]}`
-        return stringDate
-    },
-
-    
-    clearLocation: function(){
         purple_air.state = {...purple_air.default}
-        console.log('clearing form')
-        purple_air.reset()
         console.log(purple_air.state)
+        purple_air.setStartDate();
+        purple_air.setEndDate();
+        
+        pluginHelper.initDataSet(purple_air.dataSetDescription);
+    },
 
+    getStartDate: function (){
+        let value = document.getElementById("startDate").value
+        purple_air.state.startDate = value
+        return value
+    },
+
+    setStartDate: function(){
+        // set start day = today -1
+        let startDate = new Date();
+        // startDate.setDate(startDate.getDate() - 1);
+
+        let startDateStr = startDate.toJSON().slice(0,10)
+
+        document.getElementById('startDate').value = startDateStr
+        document.getElementById('startDate').max = startDateStr
+
+        purple_air.state.startDate = startDateStr
+    },
+
+    getEndDate: function (){
+        let value =  document.getElementById("endDate").value
+        purple_air.state.endDate = value
+        return value
+    },
+
+    setEndDate: function(){
+            // set end date today
+            let endDate = (new Date()).toJSON().slice(0,10)
+            document.getElementById('endDate').value = endDate
+            document.getElementById('endDate').max = endDate
+            purple_air.state.endDate = endDate
+    },
+
+    getLocationValue: function(){
+        return document.getElementById("city_input").value
+    },
+
+    setLocationValue: function(){
+        document.getElementById("city_input").value = ""
+    },
+
+    getLatLongValue: function(){
+        return document.getElementById("lat_long_input").value
+    },
+
+    setLatLongValue: function(){
+        document.getElementById("lat_long_input").value = ""
+    },
+    
+    getRadiusValue: function(){
+        let value = document.getElementById("radiusRange").value
+        purple_air.state.radiusInMiles = value
+        return value
+        // document.getElementById("radiusText").value
+    },
+
+    setRadiusValue: function(){
+        document.getElementById("radiusRange").value = default_radius_value
+        document.getElementById("radiusText").value = default_radius_value
+    },
+    
+    getMinutesValue: function(){
+        let value = document.getElementById("minutes").value
+        purple_air.state.averaginMinutes = value
+        return value
+        // document.getElementById("radiusText").value
+    },
+
+    setMinutesValue: function(){
+        document.getElementById("minutes").selectedIndex = 0
+    },
+    
+    
+    clearLocationState: function(){
+        purple_air.state.city = ""
+        purple_air.state.state = ""
+        purple_air.state.zip = ""
+    },
+
+    clearLatLongBoundingState: function(){
+        purple_air.state.latitude = 0.00
+        purple_air.state.longitude = 0.00
+        purple_air.state.city = []
+    },
+    clearStartDateState: function(){},
+    clearEndDateState: function(){},
+
+
+    clearLocation: function(){
+        purple_air.setLocationValue()
+        purple_air.setLatLongValue()
+        purple_air.clearLocationState()
+        purple_air.clearLatLongBoundingState()
+
+        console.info(`location Info Cleared ${purple_air.state}`)
     },
 
     reset: function (){
-        document.getElementById("city_input").value = ""
-        document.getElementById("lat_long_input").value = ""
-        document.getElementById("radiusRange").value = 50
-        document.getElementById("radiusText").value = 50
+        purple_air.setLocationValue()
+        purple_air.setLatLongValue()
+
+        purple_air.setRadiusValue()
+
+        purple_air.setStartDate()
+        purple_air.setEndDate()
+
+        purple_air.setMinutesValue()
+
+        purple_air.state = {...purple_air.default}
+        console.info('Form has been reset')
+        console.info(purple_air.state)
     },
 
-    fetchLocation: function(){
-        console.log('fetchin location')
-        document.getElementById("city_input").value = "Fetching"
-        document.getElementById("lat_long_input").value = "Fetching"
+    // fetchLocation: function(){
+    //     console.log('fetchin location')
+    //     document.getElementById("city_input").value = "Fetching"
+    //     document.getElementById("lat_long_input").value = "Fetching"
         
-          if (navigator.geolocation) {
-            // location = getLocation()
-            // console.log(navigator.geolocation.getCurrentPosition())
-            navigator.geolocation.getCurrentPosition(success, error, options);
-        } else { 
-            x.innerHTML = "Geolocation is not supported by this browser.";
-        }
+    //       if (navigator.geolocation) {
+    //         // location = getLocation()
+    //         // console.log(navigator.geolocation.getCurrentPosition())
+    //         navigator.geolocation.getCurrentPosition(success, error, options);
+    //     } else { 
+    //         x.innerHTML = "Geolocation is not supported by this browser.";
+    //     }
 
-        var options = {
-        enableHighAccuracy: true,
-        timeout: 5000,
-        maximumAge: 0
-        };
+    //     var options = {
+    //     enableHighAccuracy: true,
+    //     timeout: 5000,
+    //     maximumAge: 0
+    //     };
 
-        async function success(pos) {
-            // getting lat long
-            let lat = await pos.coords.latitude
-            let long = await pos.coords.longitude
+    //     async function success(pos) {
+    //         // getting lat long
+    //         let lat = await pos.coords.latitude
+    //         let long = await pos.coords.longitude
 
-            let url = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${long}&apiKey=cd1a1690ccd74ab1ba583af1dd732ec5`  
-            // console.log(url)
-            fetch(url, requestOptions)
-            .then(response => response.json())
-            .then(result=> {
-                let results = result.features[0]
-                // console.log(result)
-                let geometry = results.geometry.coordinates
-                let details = results.properties
-                let city = details.city
-                let state = details.state_code
-                let zip = details.postcode
-                let radiusInMiles = document.getElementById("radiusRange").value
+    //         let url = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${long}&apiKey=cd1a1690ccd74ab1ba583af1dd732ec5`  
+    //         // console.log(url)
+    //         let search_city = await fetch(url, requestOptions)
+    //         .then(response => response.json())
+    //         .then(result=> {
+    //             let results = result.features[0]
+    //             // console.log(result)
+    //             let geometry = results.geometry.coordinates
+    //             let details = results.properties
+    //             let city = details.city
+    //             let state = details.state_code
+    //             let zip = details.postcode
+    //             let radiusInMiles = document.getElementById("radiusRange").value
 
-                let bounding_box = purple_air.getBoundsFromLatLong(lat, long, radiusInMiles*milesToKms)
-                // saving in state info
-                purple_air.save_state(city, state, zip, lat, long, bounding_box)
+    //             let bounding_box = purple_air.getBoundsFromLatLong(lat, long, radiusInMiles*milesToKms)
+    //             // saving in state info
+    //             purple_air.save_state(city, state, zip, lat, long, bounding_box)
     
-                document.getElementById('lat_long_input').value = `${lat}, ${long}`
-                document.getElementById('city_input').value = `${city}, ${state}, ${zip} `
-            })
-            .catch(error => console.log('error', error));
+    //             document.getElementById('lat_long_input').value = `${lat}, ${long}`
+    //             document.getElementById('city_input').value = `${city}, ${state}, ${zip} `
+    //         })
+    //         .catch(error => console.log('error', error));
             
-            // console.log(purple_air.state)
+    //         // console.log(purple_air.state)
             
-        }
+    //     }
           
-        function error(err) {
-        console.warn(`ERROR(${err.code}): ${err.message}`);
-        }
+    //     function error(err) {
+    //     console.warn(`ERROR(${err.code}): ${err.message}`);
+    //     }
           
 
-    },
+    // },
 
     save_state: function(city, state, zip, lat, long, bounding_box){
         purple_air.state.city = city
@@ -239,21 +294,64 @@ var purple_air = {
         
     },
 
-    getPurpleAirData: async function(){
-        let search = document.getElementById("city_input").value
+    getFormData: function(){
+        // data = {}
+        // data.location = this.getLocationValue()
+        // data.LatLong = this.getLatLongValue()
+        // data.radiusInMiles = this.getRadiusValue() 
+        // data.startDate = this.getStartDate()
+        // data.endDate = this.getEndDate()
+        // data.averaginMinutes = this.getMinutesValue()
+        // console.log(purple_air.state)
+        console.log(purple_air.state)
+    },
 
-        if (search === ""){
-            console.log('inside')
-            document.getElementById("msg").innerText = "Please fetch / search your desired location before moving forward"
-            document.getElementById("msg").style.display = "block"
+    showError: function(message){
+        document.getElementById("msg").innerText = message
+        document.getElementById("msg").style.display = "block"
+    },
+
+    hideError: function(){
+        document.getElementById("msg").innerText = ""
+        document.getElementById("msg").style.display = "none"
+    },
+
+    getPurpleAirData: async function(){
+        // let search = document.getElementById("city_input").value
+        console.info("*****state*****")
+        console.info(purple_air.state)
+        if (purple_air.state.city === "" || (purple_air.state.latitude === 0.00 && purple_air.state.longitude === 0.00) )
+        {
+            let msg = "Please fetch & search your desired location before moving forward"
+            console.warn(msg)
+            purple_air.showError(msg)
+        }
+        // else if (purple_air.radiusInMiles ){}
+        else if (purple_air.state.startDate === ""){
+            let msg = "Please select start date before moving forward"
+            purple_air.showError(msg)
+            console.warn(msg)
+        }
+        else if (purple_air.state.endDate === ""){
+            let msg = "Please select end date before moving forward"
+            purple_air.showError(msg)
+            console.warn(msg)
+        }
+        else if (purple_air.state.averaginMinutes === 0){
+            let msg = "Please select averging minutes before moving forward"
+            purple_air.showError(msg)
+            console.warn(msg)
         }
         else{
 
-            console.log('fetchin data from purple air')
-            console.log('entry created')
+            console.info('fetchin data from purple air api')
+
             const BASE_URL = "https://api.purpleair.com/v1/sensors?api_key=CA299E4B-82DF-11EC-B9BF-42010A800003&"
-            const REQUIRED_FIELDS = "name,date_created,humidity,temperature,pressure,pm2.5,pm10.0,latitude,longitude"
-            const bounds = this.state.bounding_box
+            const REQUIRED_FIELDS = "name,primary_id_a,primary_key_a,primary_id_b,primary_key_b,latitude,longitude"
+            // resp sequence ===> sensor index, name, primary id a, key a, primary id b , key b // shown by response.fields
+
+            const bounds = purple_air.state.bounding_box
+
             const lat1 = bounds[0]
             const long1 = bounds[1]
             const lat2 = bounds[2]
@@ -265,63 +363,132 @@ var purple_air = {
 
             const bounding_string = `&selat=${lat1}&selng=${long1}&nwlat=${lat2}&nwlng=${long2}`
             const URL = `${BASE_URL}fields=${REQUIRED_FIELDS}${bounding_string}`
-            
-            console.log('fetch request')
-            console.log(URL)
-            fetch(URL, requestOptions)
-            .then(response => response.json())
-            .then(result => {
-                console.log('got the response')
-                var data = result['data']
-                console.log(data)
-                data.forEach(element => {
 
-                    var date;
-                    purple_air.getDateFromTimeStamp(element[2]).then( result => {
-                        date = result
-                    // console.log(date)
-                    var caseValues = {
-                        "Location": `${this.state.city}, ${this.state.state}`,
-                        "Sensor Index":element[0],
-                        "Sensor Name":element[1],
-                        "Date Created": date,
-                        "Humidity":element[3],
-                        "Temperature":element[4],
-                        "Pressure":element[5],
-                        "PM 2.5":element[6],
-                        "AQI":element[6]*2,
-                        "PM 10.0":element[7],
-                        "latitude":element[8],
-                        "longitude":element[9],
+            let getPAdata = await fetch(URL, requestOptions)
+            if (!getPAdata.ok){
+                const message = `An error has occured: ${response.status}`;
+                console.error(message)
+                throw new Error(message);
+            }
+            else{
+
+                // console.info(purple_air.state)
+                let result = await getPAdata.json()
+                console.info("*****purple air fetch*****")
+                console.info(result)
+
+                let fields = await result.fields
+                let datas = await result.data
+                for (data of datas)
+                {
+                    let caseValues = {
                     }
-                    pluginHelper.createItems(caseValues)
-                });
-                });
+                    // console.log(data)
+                    const sensorIndex = data[0]
+                    const sensorname = data[1]
+                    caseValues["Location"] = `${purple_air.state.city}, ${purple_air.state.state}`
+                    caseValues["Sensor Index"] = sensorIndex
+                    caseValues["Sensor Name"] = sensorname
 
-                codapInterface.sendRequest(
-                    {
-                        "action": "create",
-                        "resource": "component",
-                        "values": {
-                          "type": "map",
-                          "name": myMAP,
-                          "title": "map",
-                          "position":"bottom",
-                          "dataContextName": "purple air",
-                          "legendAttributeName": "Legend",
-                          "dimensions":{width: 460, height: 500}
-                        }
-                      }
-                ).then(function (result) {
-                    console.log(result);
+                    let [id_a, key_a] = data.slice(2,4)
+                    let [id_b, key_b] = data.slice(4,6)
+
+                    let [sensorLat, sensorLong] = data.slice(6,8)
+
+                    caseValues["latitude"] = sensorLat
+                    caseValues["longitude"] = sensorLong
+
+                    // console.log(id_a, key_a)
+                    // console.log(id_b, key_b)
+
+                    let base_thingsspeak_url_a = `https://api.thingspeak.com/channels/${id_a}/feed.json?api_key=${key_a}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}`
+
+                    let base_thingsspeak_url_b = `https://api.thingspeak.com/channels/${id_b}/feed.json?api_key=${key_b}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}`
+
+                    let fetch_a = await (await fetch(base_thingsspeak_url_a)).json()
                     
-                });
+                    let channels_a = fetch_a.channels
+                    let feeds_a = fetch_a.feeds
 
-                this.createCaseTable("dataset")
-            })
-            .catch(error => console.log('error', error));
+                    // console.log(fetch_a.feeds)
+
+                    let fetch_b = await (await fetch(base_thingsspeak_url_b)).json()
+                    // console.log(fetch_b.feeds)
+
+                    let channels_b = fetch_b.channels
+                    let feeds_b = fetch_b.feeds
+
+                    for (let i = 0; i<feeds_a.length; i ++){
+                        dfa = feeds_a[i]
+                        dfb = feeds_b[i]
+
+                        // console.log(dfa, dfb)
+
+                        caseValues["Date Created"] = (new Date(dfa.created_at)).toLocaleString()
+                        caseValues["Humidity A"] = dfa.field7
+                        caseValues["Temperature A"] = dfa.field6
+                        caseValues["PM 2.5 A"] = dfa.field8
+                        caseValues["PM 10.0 A"] = dfa.field3
+                        caseValues["AQI A"] = dfa.field3 *2
+                        caseValues["Humidity B"] = dfb.field7
+                        caseValues["Temperature B"] = dfb.field6
+                        caseValues["PM 2.5 B"] = dfb.field8
+                        caseValues["PM 10.0 B"] = dfb.field3
+                        caseValues["AQI B"] = dfb.field3*2
+
+                        pluginHelper.createItems(caseValues)
+                    }
+                    
+            
+            }
+                // for (let i = 0; i <= data.length; )
+            // }
+            // fetch(URL, requestOptions)
+            // .then(response => response.json())
+            // .then(result => {
+            //     console.log('got the response')
+            //     var data = result['data']
+            //     console.log(data)
+            //     data.forEach(element => {
+
+            //         var date;
+            //         purple_air.getDateFromTimeStamp(element[2]).then( result => {
+            //             date = result
+            //         // console.log(date)
+
+
+
+
+            //         pluginHelper.createItems(caseValues)
+
+
+
+            //     });
+            //     });
+
+            //     codapInterface.sendRequest(
+            //         {
+            //             "action": "create",
+            //             "resource": "component",
+            //             "values": {
+            //               "type": "map",
+            //               "name": myMAP,
+            //               "title": "map",
+            //               "dataContextName": "purple air",
+            //               "legendAttributeName": "Legend",
+            //             }
+            //           }
+            //     ).then(function (result) {
+            //         console.log(result);
+                    
+            //     });
+
+            //     this.createCaseTable("dataset")
+            // })
+            // .catch(error => console.log('error', error));
 
         }
+    }
     },
 
     /**
@@ -350,8 +517,29 @@ var purple_air = {
             ]
     },
 
-    changeRadius: function (value){
-        console.log(this.state.bounding_box)
+    changeRadius: async function (value){
+        // let result = response.results[0]
+        // let radiusInMiles = document.getElementById("radiusRange").value
+        // let city = result.city 
+        // let state = result.state_code
+        // let zip = result.postcode || 0
+        // let lat = result.lat
+        // let long =  result.lon
+
+        let lat = purple_air.state.latitude
+        let long = purple_air.state.longitude
+        if (lat === 0.00 || long === 0.00){
+            document.getElementById("msg").innerText = "Please fetch / search your desired location before moving forward"
+            document.getElementById("msg").style.display = "block"
+        }
+        else{
+            let radiusInMiles = value
+            let bounding_box = await purple_air.getBoundsFromLatLong(lat, long, radiusInMiles*milesToKms)
+            console.info('Radius Changed')
+            purple_air.state.bounding_box = bounding_box
+            purple_air.state.radiusInMiles = value
+            console.log(purple_air.state)
+        }        
     },
     
     createCaseTable: function(datasetName) {
@@ -360,7 +548,8 @@ var purple_air = {
           resource: `component`,
           values: {
             type: "caseTable",
-            dataContext: datasetName
+            dataContext: datasetName,
+            "dimensions":{width: 1000, height: 500}
           }
         })
         .then(function (result) {
@@ -405,8 +594,10 @@ purple_air.codapSelects = function (iMessage) {      //  |N| part of session 2 s
     state:"",
     zip:"",
     bounding_box:[],
+    radiusInMiles:default_radius_value,
     startDate: "",
-    fullStartDate: ""
+    endDate: "",
+    averaginMinutes:0
 };
 
 purple_air.default = {
@@ -416,9 +607,51 @@ purple_air.default = {
     state:"",
     zip:"",
     bounding_box:[],
+    radiusInMiles:default_radius_value,
     startDate: "",
-    fullStartDate: ""
+    endDate: "",
+    averaginMinutes:0
 }
+
+// purple_air.state = {
+//     "latitude": 35.1987522,
+//     "longitude": -111.6518229,
+//     "city": "Flagstaff",
+//     "state": "AZ",
+//     "zip": 0,
+//     "bounding_box": [
+//       35.054027379856116,
+//       -110.83466544818978,
+//       35.34347702014389,
+//       -112.46898035181022
+//     ],
+//     "radiusInMiles": 10,
+//     "startDate": "2022-03-21",
+//     "endDate": "2022-03-21",
+//     "fullUTCStartDate": "",
+//     "fullUTCEndDate": "",
+//     "averaginMinutes": 60
+//   }
+
+// purple_air.default = {
+//     "latitude": 35.1987522,
+//     "longitude": -111.6518229,
+//     "city": "Flagstaff",
+//     "state": "AZ",
+//     "zip": 0,
+//     "bounding_box": [
+//       35.054027379856116,
+//       -110.83466544818978,
+//       35.34347702014389,
+//       -112.46898035181022
+//     ],
+//     "radiusInMiles": 10,
+//     "startDate": "2022-03-21",
+//     "endDate": "2022-03-21",
+//     "fullUTCStartDate": "",
+//     "fullUTCEndDate": "",
+//     "averaginMinutes":60
+//   }
 
 
 /**
@@ -459,7 +692,7 @@ purple_air.dataSetDescription = {
             ]
         },
         {
-            "name":"Measures",
+            "name":"Sensor Data",
             "title":"List of Measures",
             "parent":"Sensors",
             "labels": {
@@ -468,14 +701,28 @@ purple_air.dataSetDescription = {
             },
             "attrs":[
                 {name: "Date Created", type: 'date', description: "date created data"},
-                {name: "Humidity", type: 'numeric', precision: 3, description: "estimated value"},
-                {name: "Temperature", type: 'numeric', precision: 3, description: "estimated value"},
-                {name: "Pressure", type: 'numeric', precision: 3, description: "your name"},
-                {name: "PM 2.5", type: 'numeric', precision: 3, description: "estimated value of pm 2.5"},
-                {name: "AQI", type: 'numeric', precision: 3, description: "Air Quality Index"},
-                {name: "PM 10.0", type: 'numeric', precision: 3, description: "estimated value of pm 10.0"},
+                {name: "Humidity A", type: 'numeric', precision: 3, description: "estimated value"},
+                {name: "Temperature A ", type: 'numeric', precision: 3, description: "estimated value"},
+                {name: "PM 10.0 A", type: 'numeric', precision: 3, description: "estimated value of pm 10.0"},
+                {name: "PM 2.5 A", type: 'numeric', precision: 3, description: "estimated value of pm 2.5"},
+                {name: "AQI A ", type: 'numeric', precision: 3, description: "Air Quality Index"},
+                {name: "Humidity B", type: 'numeric', precision: 3, description: "estimated value"},
+                {name: "Temperature B", type: 'numeric', precision: 3, description: "estimated value"},
+                {name: "PM 10.0 B", type: 'numeric', precision: 3, description: "estimated value of pm 10.0"},
+                {name: "PM 2.5 B", type: 'numeric', precision: 3, description: "estimated value of pm 2.5"},
+                {name: "AQI B", type: 'numeric', precision: 3, description: "Air Quality Index"},
+                
             ]
-
         }
     ]
 };
+
+// class caseClasse{
+//     constructor(){
+
+//     }
+
+//     getObject(){
+//         return {key:value p}
+//     }
+// }
