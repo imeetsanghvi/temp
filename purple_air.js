@@ -2,6 +2,8 @@ var milesToKms = 1.60934
 const myMAP = "my_location_map"
 const default_radius_value = 10;
 
+const timezone = "America/Phoenix"
+
 var requestOptions = {
     method: 'GET',
 };
@@ -429,11 +431,11 @@ var purple_air = {
                     // console.log(id_a, key_a)
                     // console.log(id_b, key_b)
 
-                    let base_thingsspeak_url_a = `https://api.thingspeak.com/channels/${id_a}/feed.json?api_key=${key_a}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=America/Phoenix`
+                    let base_thingsspeak_url_a = `https://api.thingspeak.com/channels/${id_a}/feed.json?api_key=${key_a}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=${timezone}`
 
                     // console.log(base_thingsspeak_url_a)
 
-                    let base_thingsspeak_url_b = `https://api.thingspeak.com/channels/${id_b}/feed.json?api_key=${key_b}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=America/Phoenix`
+                    let base_thingsspeak_url_b = `https://api.thingspeak.com/channels/${id_b}/feed.json?api_key=${key_b}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=${timezone}`
 
                     // console.log(base_thingsspeak_url_b)
 
@@ -458,7 +460,6 @@ var purple_air = {
 
 
                         caseValues["Created at"] = dfa.created_at
-                        caseValues["Arizona Time"] = (new Date(dfa.created_at)).toISOString()
 
                         caseValues["Humidity A"] = dfa.field7
                         caseValues["Temperature A"] = dfa.field6
@@ -744,11 +745,6 @@ purple_air.dataSetDescription = {
             },
             "attrs": [{
                     name: "Created at",
-                    type: 'date',
-                    description: "date created data"
-                },
-                {
-                    name: "Arizona Time",
                     type: 'date',
                     description: "date created data"
                 },
