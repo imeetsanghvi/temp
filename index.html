@@ -14,6 +14,7 @@
     <script src="CodapInterface.js" language="JavaScript"></script>
 
     <script src="pluginHelper.js" language="JavaScript"></script>
+
     <!-- bootstrap for html beautification -->
     <link 
     rel="stylesheet" 
@@ -37,11 +38,9 @@
 
 <div class="container mt-4">
 <!-- <form class="" id="pap_form" action="#"> -->
+
     <!-- city --> 
-    <!-- <h1>branch - thingspeak</h1> -->
-    <div class="input-group mb-3">
-        <!-- <span class="input-group-text" id="cityHelp">@</span> -->
-        
+    <div class="input-group mb-3">        
         <i class="input-group-text bi bi-geo-alt-fill"></i>
         <input 
             id="city_input" 
@@ -56,8 +55,6 @@
     
     <!-- lat, long -->
     <div class="input-group mb-3">
-        
-        <!-- <span class="input-group-text" id="latLongHelp">Lat, Long</span> -->
         <i class="input-group-text bi bi-globe"></i>
         <input 
         id="lat_long_input" 
@@ -67,7 +64,9 @@
         aria-label="New York City"
         aria-describedby="cityHelp"
         style="width:fit-content;" 
-        onchange=""
+        onchange="
+        console.log('Lat, Long Updated ==> ' + this.value)
+        "
         readonly>  
     </div>  
 
@@ -79,7 +78,7 @@
     
     
     
-    <!-- lat, long -->
+    <!-- Radius -->
     <div class="input-group mt-2">
         <label for="radiusRange" class="input-group-text form-label mr-1">Radius Miles</label>
         <input  
@@ -87,11 +86,16 @@
         class="form-control bg-info mr-1" 
         min="10" max="100" value="10" id="radiusRange"
         oninput="this.nextElementSibling.value = this.value"
-        onchange="purple_air.changeRadius(this.value)"
+        onchange="purple_air.changeRadius(this.value);
+        console.log('Radius Updated ==> ' + this.value);
+        console.log('Bounding Box ==> ' + purple_air.state.bounding_box)
+
+        "
         >
         <output id="radiusText" class="input-group-text">10</output>
     </div>
 
+    <!-- start date selection -->
     <div class="input-group mt-2">
         <label  for="startDate" 
                 class="input-group-text form-label mr-1">Start Date</label>
@@ -102,11 +106,14 @@
             value="" min="" max=""
             onchange="
             purple_air.state.startDate = this.value;
-            purple_air.hideError()"
+            purple_air.hideError()
+            console.log('Start Date Updated ==> ' + this.value)
+            "
         >
         
     </div>
 
+    <!-- end date selection -->
     <div class="input-group mt-2">
         <label  for="endDate" 
                 class="input-group-text form-label mr-1">End Date</label>
@@ -118,17 +125,25 @@
             max=""
             onchange="
             purple_air.state.endDate = this.value;
-            purple_air.hideError()"
+            purple_air.hideError();
+            console.log('End date updated ==> ' + this.value)
+            "
         >
         
     </div>
 
-    <!-- averaging -->
+    <!-- averaging minutes selection -->
     <div class="input-group mt-2">
         <label for="minutes" 
         class="input-group-text form-label mr-1">Averaging Minutes</label>
 
-        <select name="minutes" id="minutes" onchange="purple_air.state.averaginMinutes = this.value; purple_air.hideError()">
+        <select name="minutes" id="minutes" 
+        onchange="
+        purple_air.state.averaginMinutes = this.value; 
+        purple_air.hideError(); 
+        console.log('Averging Minutes Value Updated ==> ' + this.value)
+        ">
+
             <option value="none" disabled selected>select minutes</option>
             <option value="10">10</option>
             <option value="15">15</option>
@@ -150,9 +165,21 @@
             class="btn btn-outline-primary mt-2">Get Purple Air Data</button>
     </div>
 
+    <div id="spinner" style="display: none;">
+        <div 
+            class="d-flex mt-3" 
+            >
+            <strong id="spinner_text">Loading Please Wait...</strong>
+            <div class="spinner-border ml-auto" role="status" aria-hidden="true"></div><br>
+        </div>
+    </div>
+
+
     <p id="msg" class="alert alert-danger mt-2" style="display: none;"></p>
     <!-- </form> -->
 
+    <!-- <button onclick="purple_air.disable_form_input()">Disable Form</button>
+    <button onclick="purple_air.enable_form_input()">Enable Form</button> -->
 </div>
 
 
