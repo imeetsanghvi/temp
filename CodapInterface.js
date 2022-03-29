@@ -136,7 +136,8 @@ var codapInterface = Object.create({
         title: config.title,
         version: config.version,
         dimensions: config.dimensions,
-        preventBringToFront: config.preventBringToFront
+        preventBringToFront: config.preventBringToFront,
+        cannotClose: true
       };
       var updateFrameReq = {
         action: 'update',
