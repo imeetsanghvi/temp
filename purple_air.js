@@ -431,7 +431,11 @@ var purple_air = {
 
                     let base_thingsspeak_url_a = `https://api.thingspeak.com/channels/${id_a}/feed.json?api_key=${key_a}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=America/Phoenix`
 
+                    console.log(base_thingsspeak_url_a)
+
                     let base_thingsspeak_url_b = `https://api.thingspeak.com/channels/${id_b}/feed.json?api_key=${key_b}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=America/Phoenix`
+
+                    console.log(base_thingsspeak_url_b)
 
                     let fetch_a = await (await fetch(base_thingsspeak_url_a)).json()
 
