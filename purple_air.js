@@ -2,6 +2,10 @@ var milesToKms = 1.60934
 const myMAP = "my_location_map"
 const default_radius_value = 10;
 
+const timezone = "America/Phoenix"
+
+let flag = 1
+
 var requestOptions = {
     method: 'GET',
 };
@@ -527,8 +531,12 @@ var purple_air = {
                         dfa = feeds_a[i]
                         dfb = feeds_b[i]
 
-                        // console.log(dfa, dfb)    
-
+                        if (flag === 1){
+                            console.log(base_thingsspeak_url_a, base_thingsspeak_url_b)
+                            console.log(feeds_a, feeds_b)
+                            console.log(dfa, dfb)
+                            flag = 0
+                        }
 
                         caseValues["Created at"] = (new Date(dfa.created_at)).toISOString()
 
@@ -553,41 +561,6 @@ var purple_air = {
                 this.createCaseTable("dataset")
 
             }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             purple_air.enable_form_input()
         }
     },
