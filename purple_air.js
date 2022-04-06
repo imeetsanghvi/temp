@@ -621,7 +621,7 @@ var purple_air = {
         }
         } catch (error) {
             document.getElementById("spinner").style.display = 'none'
-            purple_air.showError(`Error\n${error} \nPlease email us a screenshot screenshot of this page `)
+            purple_air.showError(`Error\n${error}\n\nPlease refresh the window & try again - if the error persists - email us a screenshot of this window @ puple.air.codap.support@asu.edu\n`)
         }
 
     },
