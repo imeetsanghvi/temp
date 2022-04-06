@@ -4,7 +4,7 @@ const default_radius_value = 10;
 
 const timezone = "America/Phoenix"
 
-let flag = 1
+let flag = 0
 
 var requestOptions = {
     method: 'GET',
@@ -16,7 +16,7 @@ function startCodapConnection() {
         version: "001",
         dimensions: {
             width: 380,
-            height: 600
+            height: 800
         },
         preventBringToFront: false,
     };
@@ -69,6 +69,8 @@ var purple_air = {
 
         purple_air.state.startDate = startDateStr
     },
+
+
 
     getEndDate: function() {
         let value = document.getElementById("endDate").value
@@ -321,6 +323,11 @@ var purple_air = {
         document.getElementById("msg").style.display = "block"
     },
 
+    showSccuess: function(message) {
+        document.getElementById("msg").innerText = message
+        document.getElementById("msg").style.display = "block"
+    },
+
     hideError: function() {
         document.getElementById("msg").innerText = ""
         document.getElementById("msg").style.display = "none"
@@ -328,6 +335,14 @@ var purple_air = {
 
     setSpinnerText: function(text) {
         document.getElementById("spinner_text").innerText = text
+    },
+
+    setDateText: function(text) {
+        document.getElementById("date_text").innerText = text
+    },
+
+    setSensorList: function(count){
+        document.getElementById("sensor_list").innerText = `Found ${count} sensor(s)`
     },
 
     disable_form_input: function() {
@@ -421,8 +436,146 @@ var purple_air = {
 
     },
 
+
+    getDaysArray: function (start, end) {
+        for(var arr=[],dt=new Date(start); dt<=end; dt.setDate(dt.getDate()+1)){
+            arr.push((new Date(dt)).toJSON().slice(0,10));
+        }
+        return arr;
+    },    
+
+    getElevationFromLatLong: async function(latLngList){
+
+        const baseElevationURL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
+        let elevationList = []
+        let elevation = (await (await fetch(baseElevationURL)).json())
+        if (elevation.status === "OK"){
+            let results = await elevation["results"]
+            await results.forEach(element => {
+                    elevationList.push(element.elevation)
+                });
+            // console.log(elevation)
+            return elevationList
+        }
+        else{
+            console.error("elevation failed")
+            return elevationList // returns empty list if request did not succed
+        }
+
+    },
+
+    getPurpleAirAPIData: async function(){
+
+        const api_key = "CA299E4B-82DF-11EC-B9BF-42010A800003"
+        const FIELDS_REQD = 'name,primary_id_a,primary_key_a,latitude,longitude'
+        const [selat, selng, nwlat, nwlng] = purple_air.state.bounding_box
+
+        const BASE_PURPLE_AIR_URL = `https://api.purpleair.com/v1/sensors?api_key=${api_key}&fields=${FIELDS_REQD}&selat=${selat}&selng=${selng}&nwlat=${nwlat}&nwlng=${nwlng}`
+
+        let latLngList = []
+
+        const purple_air_fields =   {
+            sensor_index: "",
+            name: "",
+            primary_id_a: "",
+            primary_key_a: "",
+            latitude: "",
+            longitude: ""
+        }
+
+        let sensorValues = []
+    
+        let fetch_purple_air = await (await fetch(BASE_PURPLE_AIR_URL)).json() 
+    
+        let data = fetch_purple_air.data
+        for (let d of data){
+            
+            let newRow = {...purple_air_fields}
+            newRow.Location = purple_air.state.city
+            newRow.sensor_index =   d[0]
+            newRow.name =           d[1]
+            newRow.primary_id_a =   d[2]
+            newRow.primary_key_a =  d[3]
+            newRow.latitude =       d[4]
+            newRow.longitude =      d[5]
+            latLngList.push( `${d[4]},${d[5]}` )
+            sensorValues.push(newRow)
+        
+        }
+
+        // console.log(latLngList.join("|"))
+        let elevationList = await purple_air.getElevationFromLatLong(latLngList.join("|"))
+        // console.log(elevationList)
+        
+        for (const [index, sensor] of sensorValues.entries()){
+            // console.log(sensor.name, elevationList[index])
+            sensor.elevation = elevationList[index]
+        }
+
+        if (flag === 1) {        console.log(sensorValues)        }
+
+        return sensorValues
+    
+    },
+
+    getThingSpeakData: async function(purpleAirData){
+        let answers = []
+        let i = 1
+        let n = purpleAirData.length
+
+        if (flag ===1 ){
+            console.info("ThingsSpeak Function")
+            console.info(purpleAirData)
+        }
+
+        for (let sensor of purpleAirData){
+            purple_air.setSpinnerText(`Sensor ${i}/${n} - ${sensor.name}`)
+            // console.log(sensor.name)
+    
+            let dates = purple_air.getDaysArray( 
+                (new Date(purple_air.state.startDate)), 
+                (new Date(purple_air.state.endDate)) 
+            )
+
+            
+            for (let date of dates){
+                purple_air.setDateText(`Fetching Date ${date}`)
+                const base_url_a = `https://api.thingspeak.com/channels/${sensor.primary_id_a}/feed.json?api_key=${sensor.primary_key_a}&offset=0&average=${purple_air.state.averaginMinutes}&round=2&start=${date}%2000:00:00&end=${date}%2023:59:59&results=8000&timezone=America/Phoenix`
+    
+                let sa = await (await fetch(base_url_a)).json()
+                // console.log(sa.feeds)
+                let data = sa.feeds
+                data.forEach(element => {
+                    delete element.field1
+                    delete element.field2
+                    delete element.field4
+                    delete element.field5
+    
+                    element["Temperature"] = element.field6
+                    element["Humidity"] = element.field7
+                    element["PM 2.5"] = element.field8
+                    element["PM 10.0"] = element.field3
+                    element["AQI"] = purple_air.getAQIfromPM(element.field3)
+
+                    delete element.field3
+                    delete element.field6
+                    delete element.field7
+                    delete element.field8
+
+                    Object.assign(element, sensor)
+                });
+             
+                answers.push(...data)
+            }
+            i = i + 1
+        }
+        return answers
+    
+    },
+
     getPurpleAirData: async function() {
-        // let search = document.getElementById("city_input").value
+        try {
+                    // let search = document.getElementById("city_input").value
         console.info("*****state*****")
         console.info(purple_air.state)
 
@@ -448,121 +601,29 @@ var purple_air = {
 
             purple_air.disable_form_input()
 
-
             console.info('fetchin data from purple air api')
             purple_air.setSpinnerText("Fetching Data from Purple Air")
 
-            const BASE_URL = "https://api.purpleair.com/v1/sensors?api_key=CA299E4B-82DF-11EC-B9BF-42010A800003&"
-            const REQUIRED_FIELDS = "name,primary_id_a,primary_key_a,primary_id_b,primary_key_b,latitude,longitude"
-            // resp sequence ===> sensor index, name, primary id a, key a, primary id b , key b // shown by response.fields
+            let purpleAirData = await purple_air.getPurpleAirAPIData()
+            purple_air.setSensorList(purpleAirData.length)
 
-            const bounds = purple_air.state.bounding_box
+            if (flag === 1) { console.log(purpleAirData) }
 
-            const lat1 = bounds[0]
-            const long1 = bounds[1]
-            const lat2 = bounds[2]
-            const long2 = bounds[3]
+            let thingSpeakData = await purple_air.getThingSpeakData(purpleAirData)
+            if (flag ===1) {console.info(thingSpeakData)}
 
-            // const startTime = (new Date(this.state.startDate)).getTime()/1000
-            // startTime = (startTime.getTime()/1000)
-            // console.log(`start time = ${startTime}`)
-
-            const bounding_string = `&selat=${lat1}&selng=${long1}&nwlat=${lat2}&nwlng=${long2}`
-            const URL = `${BASE_URL}fields=${REQUIRED_FIELDS}${bounding_string}`
-
-            let getPAdata = await fetch(URL, requestOptions)
-            if (!getPAdata.ok) {
-                const message = `An error has occured: ${response.status}`;
-                console.error(message)
-                throw new Error(message);
-            } else {
+            pluginHelper.createItems(thingSpeakData)
+            this.createMapComponent()
+            this.createCaseTable("dataset")
 
 
-                // console.info(purple_air.state)
-                let result = await getPAdata.json()
-                console.info("*****purple air fetch*****")
-
-                // console.info(result)
-
-                let fields = await result.fields
-                let datas = await result.data
-
-                let index_i = 1
-                for (data of datas) {
-                    purple_air.setSpinnerText(`generating values for sensor ${index_i}`)
-
-                    let caseValues = {}
-                    // console.log(data)
-                    const sensorIndex = data[0]
-                    const sensorname = data[1]
-                    caseValues["Location"] = `${purple_air.state.city}, ${purple_air.state.state}`
-                    caseValues["Sensor Index"] = sensorIndex
-                    caseValues["Sensor Name"] = sensorname
-
-                    let [id_a, key_a] = data.slice(2, 4)
-                    let [id_b, key_b] = data.slice(4, 6)
-
-                    let [sensorLat, sensorLong] = data.slice(6, 8)
-
-                    caseValues["latitude"] = sensorLat
-                    caseValues["longitude"] = sensorLong
-
-                    // console.log(id_a, key_a)
-                    // console.log(id_b, key_b)
-
-                    let base_thingsspeak_url_a = `https://api.thingspeak.com/channels/${id_a}/feed.json?api_key=${key_a}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=America/Phoenix`
-
-                    let base_thingsspeak_url_b = `https://api.thingspeak.com/channels/${id_b}/feed.json?api_key=${key_b}&start=${purple_air.state.startDate}%0000:00:00&end=${purple_air.state.endDate}%0023:59:59&offset=0&round=2&average=${purple_air.state.averaginMinutes}&timezone=America/Phoenix`
-
-                    let fetch_a = await (await fetch(base_thingsspeak_url_a)).json()
-
-                    let channels_a = fetch_a.channels
-                    let feeds_a = fetch_a.feeds
-
-                    // console.log(fetch_a.feeds)
-
-                    let fetch_b = await (await fetch(base_thingsspeak_url_b)).json()
-                    // console.log(fetch_b.feeds)
-
-                    let channels_b = fetch_b.channels
-                    let feeds_b = fetch_b.feeds
-
-                    for (let i = 0; i < feeds_a.length; i++) {
-                        dfa = feeds_a[i]
-                        dfb = feeds_b[i]
-
-                        if (flag === 1){
-                            console.log(base_thingsspeak_url_a, base_thingsspeak_url_b)
-                            console.log(feeds_a, feeds_b)
-                            console.log(dfa, dfb)
-                            flag = 0
-                        }
-
-                        caseValues["Created at"] = (new Date(dfa.created_at)).toISOString()
-
-                        caseValues["Humidity A"] = dfa.field7
-                        caseValues["Temperature A"] = dfa.field6
-                        caseValues["PM 2.5 A"] = dfa.field8
-                        caseValues["PM 10.0 A"] = dfa.field3
-                        caseValues["AQI A"] = purple_air.getAQIfromPM(dfa.field3)
-                        
-                        caseValues["Temperature B"] = dfb.field6
-                        caseValues["PM 2.5 B"] = dfb.field8
-                        caseValues["PM 10.0 B"] = dfb.field3
-                        caseValues["AQI B"] = purple_air.getAQIfromPM(dfb.field3)
-
-                        pluginHelper.createItems(caseValues)
-                    }
-                    index_i = index_i + 1
-
-
-                }
-                this.createMapComponent()
-                this.createCaseTable("dataset")
-
-            }
             purple_air.enable_form_input()
         }
+        } catch (error) {
+            document.getElementById("spinner").style.display = 'none'
+            purple_air.showError(`Error\n${error} \nPlease email us a screenshot screenshot of this page `)
+        }
+
     },
 
     /**
@@ -592,13 +653,6 @@ var purple_air = {
     },
 
     changeRadius: async function(value) {
-        // let result = response.results[0]
-        // let radiusInMiles = document.getElementById("radiusRange").value
-        // let city = result.city 
-        // let state = result.state_code
-        // let zip = result.postcode || 0
-        // let lat = result.lat
-        // let long =  result.lon
 
         let lat = purple_air.state.latitude
         let long = purple_air.state.longitude
@@ -647,7 +701,7 @@ var purple_air = {
                     dataContext: datasetName,
                     "dimensions": {
                         width: 1000,
-                        height: 500
+                        height: 800
                     }
                 }
             })
@@ -730,8 +784,6 @@ purple_air.default = {
 //     "radiusInMiles": 10,
 //     "startDate": "2022-03-21",
 //     "endDate": "2022-03-21",
-//     "fullUTCStartDate": "",
-//     "fullUTCEndDate": "",
 //     "averaginMinutes": 60
 //   }
 
@@ -750,8 +802,6 @@ purple_air.default = {
 //     "radiusInMiles": 10,
 //     "startDate": "2022-03-21",
 //     "endDate": "2022-03-21",
-//     "fullUTCStartDate": "",
-//     "fullUTCEndDate": "",
 //     "averaginMinutes":60
 //   }
 
@@ -778,39 +828,57 @@ purple_air.dataSetDescription = {
         width: 1000,
         height: 500
     },
-    collections: [{
-            name: "Sensors",
+    collections: [
+            {
+            name: "Search",
             parent: null, //  this.gameCollectionName,    //  this.bucketCollectionName,
+            labels: {
+                singleCase: "location",
+                pluralCase: "locations",
+                setOfCasesWithArticle: "Set of locations"
+            },
+            attrs:[
+                {                    
+                "name": "Location",
+                "type": "Categorical",
+                "description": "user's searched location / current location"}
+            ]
+            },
+            
+            {
+            name: "Sensors",
+            parent: "Search", //  this.gameCollectionName,    //  this.bucketCollectionName,
             labels: {
                 singleCase: "sensor",
                 pluralCase: "sensors",
                 setOfCasesWithArticle: "Set of Values"
             },
 
-            attrs: [{
-                    "name": "Location",
-                    "type": "Categorical",
-                    "description": "user's searched location / current location"
-                },
+            attrs: [
                 {
-                    name: "Sensor Index",
+                    name: "sensor_index",
                     type: 'numeric',
                     description: "Sensors id"
                 },
                 {
-                    name: "Sensor Name",
+                    name: "name",
                     type: 'categorical',
                     description: "Sensors Name"
                 },
                 {
                     name: "latitude",
                     type: 'numeric',
-                    description: "user's location"
+                    description: "sensor's latitude"
                 },
                 {
                     name: "longitude",
                     type: 'numeric',
-                    description: "user's location"
+                    description: "sensor's longitude"
+                },
+                {
+                    name: "elevation",
+                    type: 'numeric',
+                    description: "sensor's elevation"
                 },
             ]
         },
@@ -823,64 +891,40 @@ purple_air.dataSetDescription = {
                 "pluralCase": "measures"
             },
             "attrs": [{
-                    name: "Created at",
+                    name: "created_at",
                     type: 'date',
                     description: "date created data"
                 },
                 {
-                    name: "Humidity A",
+                    name: "Humidity",
                     type: 'numeric',
                     precision: 3,
                     description: "estimated value"
                 },
                 {
-                    name: "Temperature A ",
+                    name: "Temperature",
                     type: 'numeric',
                     precision: 3,
                     description: "estimated value"
                 },
                 {
-                    name: "PM 10.0 A",
+                    name: "PM 10.0",
                     type: 'numeric',
                     precision: 3,
                     description: "estimated value of pm 10.0"
                 },
                 {
-                    name: "PM 2.5 A",
+                    name: "PM 2.5",
                     type: 'numeric',
                     precision: 3,
                     description: "estimated value of pm 2.5"
                 },
                 {
-                    name: "AQI A ",
+                    name: "AQI",
                     type: 'numeric',
                     precision: 3,
                     description: "Air Quality Index"
-                },
-                {
-                    name: "Temperature B",
-                    type: 'numeric',
-                    precision: 3,
-                    description: "estimated value"
-                },
-                {
-                    name: "PM 10.0 B",
-                    type: 'numeric',
-                    precision: 3,
-                    description: "estimated value of pm 10.0"
-                },
-                {
-                    name: "PM 2.5 B",
-                    type: 'numeric',
-                    precision: 3,
-                    description: "estimated value of pm 2.5"
-                },
-                {
-                    name: "AQI B",
-                    type: 'numeric',
-                    precision: 3,
-                    description: "Air Quality Index"
-                },
+                }
 
             ]
         }
