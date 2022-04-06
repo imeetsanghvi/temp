@@ -5,7 +5,6 @@ const default_radius_value = 10;
 const timezone = "America/Phoenix"
 
 let flag = 0
-
 var requestOptions = {
     method: 'GET',
 };
@@ -58,12 +57,9 @@ var purple_air = {
     },
 
     setStartDate: function() {
-        // set start day = today -1
         let startDate = new Date();
-        // startDate.setDate(startDate.getDate() - 1);
-
-        let startDateStr = startDate.toJSON().slice(0, 10)
-
+        let d = startDate.toLocaleString().split(",")[0].split("/")
+        let startDateStr = `${d[2]}-${d[0].padStart(2,0)}-${d[1].padStart(2,0)}`
         document.getElementById('startDate').value = startDateStr
         document.getElementById('startDate').max = startDateStr
 
@@ -79,11 +75,12 @@ var purple_air = {
     },
 
     setEndDate: function() {
-        // set end date today
-        let endDate = (new Date()).toJSON().slice(0, 10)
-        document.getElementById('endDate').value = endDate
-        document.getElementById('endDate').max = endDate
-        purple_air.state.endDate = endDate
+        let endDate = new Date()
+        let d = endDate.toLocaleString().split(",")[0].split("/")
+        let endDateStr = `${d[2]}-${d[0].padStart(2,0)}-${d[1].padStart(2,0)}`
+        document.getElementById('endDate').value = endDateStr
+        document.getElementById('endDate').max = endDateStr
+        purple_air.state.endDate = endDateStr
     },
 
     getLocationValue: function() {
@@ -168,64 +165,6 @@ var purple_air = {
         console.info(purple_air.state)
     },
 
-    // fetchLocation: function(){
-    //     console.log('fetchin location')
-    //     document.getElementById("city_input").value = "Fetching"
-    //     document.getElementById("lat_long_input").value = "Fetching"
-
-    //       if (navigator.geolocation) {
-    //         // location = getLocation()
-    //         // console.log(navigator.geolocation.getCurrentPosition())
-    //         navigator.geolocation.getCurrentPosition(success, error, options);
-    //     } else { 
-    //         x.innerHTML = "Geolocation is not supported by this browser.";
-    //     }
-
-    //     var options = {
-    //     enableHighAccuracy: true,
-    //     timeout: 5000,
-    //     maximumAge: 0
-    //     };
-
-    //     async function success(pos) {
-    //         // getting lat long
-    //         let lat = await pos.coords.latitude
-    //         let long = await pos.coords.longitude
-
-    //         let url = `https://api.geoapify.com/v1/geocode/reverse?lat=${lat}&lon=${long}&apiKey=cd1a1690ccd74ab1ba583af1dd732ec5`  
-    //         // console.log(url)
-    //         let search_city = await fetch(url, requestOptions)
-    //         .then(response => response.json())
-    //         .then(result=> {
-    //             let results = result.features[0]
-    //             // console.log(result)
-    //             let geometry = results.geometry.coordinates
-    //             let details = results.properties
-    //             let city = details.city
-    //             let state = details.state_code
-    //             let zip = details.postcode
-    //             let radiusInMiles = document.getElementById("radiusRange").value
-
-    //             let bounding_box = purple_air.getBoundsFromLatLong(lat, long, radiusInMiles*milesToKms)
-    //             // saving in state info
-    //             purple_air.save_state(city, state, zip, lat, long, bounding_box)
-
-    //             document.getElementById('lat_long_input').value = `${lat}, ${long}`
-    //             document.getElementById('city_input').value = `${city}, ${state}, ${zip} `
-    //         })
-    //         .catch(error => console.log('error', error));
-
-    //         // console.log(purple_air.state)
-
-    //     }
-
-    //     function error(err) {
-    //     console.warn(`ERROR(${err.code}): ${err.message}`);
-    //     }
-
-
-    // },
-
     save_state: async function(city, state, zip, lat, long, bounding_box) {
         purple_air.state.city = await city
         purple_air.state.state = await state
@@ -286,23 +225,6 @@ var purple_air = {
                 })
                 .catch(error => console.log('error', error));
         }
-    },
-
-    getDateFromTimeStamp: async function(timestamp) {
-        var date = (new Date(timestamp * 1000))
-        const year = date.getFullYear();
-        // console.log(year); // 👉️ 2025
-
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        // console.log(month); // 👉️ 03
-
-        const day = String(date.getDate()).padStart(2, '0');
-        // console.log(day); // 👉️ 05
-
-        const joined = [month, day, year].join('/');
-        // console.log(joined); // 👉️ 05/03/2025
-        return joined
-
     },
 
     getFormData: function() {
@@ -604,6 +526,7 @@ var purple_air = {
             console.info('fetchin data from purple air api')
             purple_air.setSpinnerText("Fetching Data from Purple Air")
 
+
             let purpleAirData = await purple_air.getPurpleAirAPIData()
             purple_air.setSensorList(purpleAirData.length)
 
@@ -615,8 +538,6 @@ var purple_air = {
             pluginHelper.createItems(thingSpeakData)
             this.createMapComponent()
             this.createCaseTable("dataset")
-
-
             purple_air.enable_form_input()
         }
         } catch (error) {
