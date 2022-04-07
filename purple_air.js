@@ -368,7 +368,7 @@ var purple_air = {
 
     getElevationFromLatLong: async function(latLngList){
 
-        const baseElevationURL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
+        const baseElevationURL = `https://cors-anywhere.herokuapp.com/https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
         let elevationList = []
         let elevation = (await (await fetch(baseElevationURL)).json())
         if (elevation.status === "OK"){
