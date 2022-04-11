@@ -366,25 +366,25 @@ var purple_air = {
         return arr;
     },    
 
-    getElevationFromLatLong: async function(latLngList){
+    // getElevationFromLatLong: async function(latLngList){
 
-        const baseElevationURL = `https://cors-anywhere.herokuapp.com/https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
-        let elevationList = []
-        let elevation = (await (await fetch(baseElevationURL)).json())
-        if (elevation.status === "OK"){
-            let results = await elevation["results"]
-            await results.forEach(element => {
-                    elevationList.push(element.elevation)
-                });
-            // console.log(elevation)
-            return elevationList
-        }
-        else{
-            console.error("elevation failed")
-            return elevationList // returns empty list if request did not succed
-        }
+    //     const baseElevationURL = `https://cors-anywhere.herokuapp.com/https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
+    //     let elevationList = []
+    //     let elevation = (await (await fetch(baseElevationURL)).json())
+    //     if (elevation.status === "OK"){
+    //         let results = await elevation["results"]
+    //         await results.forEach(element => {
+    //                 elevationList.push(element.elevation)
+    //             });
+    //         // console.log(elevation)
+    //         return elevationList
+    //     }
+    //     else{
+    //         console.error("elevation failed")
+    //         return elevationList // returns empty list if request did not succed
+    //     }
 
-    },
+    // },
 
     getPurpleAirAPIData: async function(){
 
@@ -425,14 +425,14 @@ var purple_air = {
         
         }
 
-        // console.log(latLngList.join("|"))
-        let elevationList = await purple_air.getElevationFromLatLong(latLngList.join("|"))
-        // console.log(elevationList)
+        // // console.log(latLngList.join("|"))
+        // let elevationList = await purple_air.getElevationFromLatLong(latLngList.join("|"))
+        // // console.log(elevationList)
         
-        for (const [index, sensor] of sensorValues.entries()){
-            // console.log(sensor.name, elevationList[index])
-            sensor.elevation = elevationList[index]
-        }
+        // for (const [index, sensor] of sensorValues.entries()){
+        //     // console.log(sensor.name, elevationList[index])
+        //     sensor.elevation = elevationList[index]
+        // }
 
         if (flag === 1) {        console.log(sensorValues)        }
 
@@ -795,12 +795,13 @@ purple_air.dataSetDescription = {
                     name: "longitude",
                     type: 'numeric',
                     description: "sensor's longitude"
-                },
-                {
-                    name: "elevation",
-                    type: 'numeric',
-                    description: "sensor's elevation"
-                },
+                }
+                // ,
+                // {
+                //     name: "elevation",
+                //     type: 'numeric',
+                //     description: "sensor's elevation"
+                // },
             ]
         },
         {
