@@ -369,34 +369,35 @@ var purple_air = {
    
 
     getElevationFromLatLong: async function(latLngList){
-        function getData(ajaxurl) { 
-            return $.ajax({
-              url: ajaxurl,
-              type: 'GET',
-            });
-          };
+        // function getData(ajaxurl) { 
+        //     return $.ajax({
+        //       url: ajaxurl,
+        //       type: 'GET',
+        //     });
+        //   };
 
-        const URL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
+        // const URL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
                 
-        try {
-            const response = await getData(URL)
-            let elevationList = []
-            let status = await response["status"]
-            let results = await response["results"]
-            if (status === "OK"){
-                await results.forEach(element => {
-                        elevationList.push(element.elevation)
-                    });
-                console.info("elevation data fetched successfully")
-                return elevationList
-            }
-            else{
-                console.error("elevation fetch failed")
-                return []; // returns empty list if request did not succed
-            }
-        } catch(err) {
-            console.log(err);
-        }
+        // try {
+        //     const response = await getData(URL)
+        //     let elevationList = []
+        //     let status = await response["status"]
+        //     let results = await response["results"]
+        //     if (status === "OK"){
+        //         await results.forEach(element => {
+        //                 elevationList.push(element.elevation)
+        //             });
+        //         console.info("elevation data fetched successfully")
+        //         return elevationList
+        //     }
+        //     else{
+        //         console.error("elevation fetch failed")
+        //         return []; // returns empty list if request did not succed
+        //     }
+        // } catch(err) {
+        //     console.log(err);
+        // }
+        return []
     },
 
 
