@@ -366,23 +366,56 @@ var purple_air = {
         return arr;
     },    
 
+    logResults: function(json){
+        console.log("JQUERY CALL HERE")
+        console.log(json)
+    },
+
     getElevationFromLatLong: async function(latLngList){
 
-        const baseElevationURL = `https://cors-anywhere.herokuapp.com/https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
-        let elevationList = []
-        let elevation = (await (await fetch(baseElevationURL)).json())
-        if (elevation.status === "OK"){
-            let results = await elevation["results"]
-            await results.forEach(element => {
-                    elevationList.push(element.elevation)
-                });
-            // console.log(elevation)
-            return elevationList
-        }
-        else{
-            console.error("elevation failed")
-            return elevationList // returns empty list if request did not succed
-        }
+        // function logResults(json){
+        //     console.log("inner call")
+        //     console.log(json)
+
+
+        // }
+
+        console.log("JQUERY CALL HERE 1")
+        const URL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
+        console.log(URL)
+
+        // $.ajax({
+        // url: URL,
+        // dataType: "jsonp",
+        // jsonpCallback: "logResults"
+        // });
+
+        $.get(
+            URL, 
+            function( data ) {
+                // $( ".result" ).html( data );
+                // alert( "Load was performed." );
+                console.log(data)
+              });
+        
+
+        // const baseElevationURL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
+        // $.getJSON()
+        // let elevationList = []
+        // let elevation = (await (await fetch(baseElevationURL)).json())
+        // if (elevation.status === "OK"){
+        //     let results = await elevation["results"]
+        //     await results.forEach(element => {
+        //             elevationList.push(element.elevation)
+        //         });
+        //     // console.log(elevation)
+        //     return elevationList
+        // }
+        // else{
+        //     console.error("elevation failed")
+        //     return elevationList // returns empty list if request did not succed
+        // }
+        return []
 
     },
 
