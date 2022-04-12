@@ -366,58 +366,39 @@ var purple_air = {
         return arr;
     },    
 
-    logResults: function(json){
-        console.log("JQUERY CALL HERE")
-        console.log(json)
-    },
+   
 
     getElevationFromLatLong: async function(latLngList){
+        function getData(ajaxurl) { 
+            return $.ajax({
+              url: ajaxurl,
+              type: 'GET',
+            });
+          };
 
-        // function logResults(json){
-        //     console.log("inner call")
-        //     console.log(json)
-
-
-        // }
-
-        console.log("JQUERY CALL HERE 1")
         const URL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
-        console.log(URL)
-
-        // $.ajax({
-        // url: URL,
-        // dataType: "jsonp",
-        // jsonpCallback: "logResults"
-        // });
-
-        $.get(
-            URL, 
-            function( data ) {
-                // $( ".result" ).html( data );
-                // alert( "Load was performed." );
-                console.log(data)
-              });
-        
-
-        // const baseElevationURL = `https://api.opentopodata.org/v1/test-dataset?locations=${latLngList}`
-        // $.getJSON()
-        // let elevationList = []
-        // let elevation = (await (await fetch(baseElevationURL)).json())
-        // if (elevation.status === "OK"){
-        //     let results = await elevation["results"]
-        //     await results.forEach(element => {
-        //             elevationList.push(element.elevation)
-        //         });
-        //     // console.log(elevation)
-        //     return elevationList
-        // }
-        // else{
-        //     console.error("elevation failed")
-        //     return elevationList // returns empty list if request did not succed
-        // }
-        return []
-
+                
+        try {
+            const response = await getData(URL)
+            let elevationList = []
+            let status = await response["status"]
+            let results = await response["results"]
+            if (status === "OK"){
+                await results.forEach(element => {
+                        elevationList.push(element.elevation)
+                    });
+                console.info("elevation data fetched successfully")
+                return elevationList
+            }
+            else{
+                console.error("elevation fetch failed")
+                return Array(latLngList.split("|").length).fill(-1); // returns empty list if request did not succed
+            }
+        } catch(err) {
+            console.log(err);
+        }
     },
+
 
     getPurpleAirAPIData: async function(){
 
