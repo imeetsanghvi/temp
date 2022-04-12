@@ -392,7 +392,7 @@ var purple_air = {
             }
             else{
                 console.error("elevation fetch failed")
-                return Array(latLngList.split("|").length).fill(-1); // returns empty list if request did not succed
+                return []; // returns empty list if request did not succed
             }
         } catch(err) {
             console.log(err);
